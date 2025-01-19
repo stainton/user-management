@@ -9,6 +9,17 @@ import (
 
 var DB *sql.DB
 
+func NewDB(dsn string) *sql.DB {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil
+	}
+	if err = db.Ping(); err != nil {
+		return nil
+	}
+	return db
+}
+
 func Init() error {
 	var err error
 	dsn := "user:password@tcp(localhost:3306)/userdb"

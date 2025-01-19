@@ -7,17 +7,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type BaseUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
+
 type User struct {
+	BaseUser
 	ID        int       `json:"id"`
-	Username  string    `json:"username"`
-	Password  string    `json:"password"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	return string(bytes), err
 }
 
@@ -26,12 +30,11 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func CreateUser(db *sql.DB, user User) error {
+func CreateUser(db *sql.DB, user BaseUser) error {
 	hashedPassword, err := HashPassword(user.Password)
 	if err != nil {
 		return err
 	}
-
 	_, err = db.Exec("INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)", user.Username, hashedPassword, user.Email, user.Role)
 	return err
 }

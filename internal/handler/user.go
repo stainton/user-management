@@ -1,22 +1,36 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
-	"github.com/stainton/user-management/internal/db"
-	"github.com/stainton/user-management/internal/middleware"
+	"github.com/gin-gonic/gin"
 	"github.com/stainton/user-management/internal/models"
+	"github.com/stainton/user-management/pkg/middleware"
 )
 
+var db *sql.DB
+
+func RegisterUserManager(connectedDB *sql.DB, router *gin.Engine) {
+	db = connectedDB
+
+	router.POST("/register", func(ctx *gin.Context) {
+		RegisterHandler(ctx.Writer, ctx.Request)
+	})
+	router.POST("/login", func(ctx *gin.Context) {
+		LoginHandler(ctx.Writer, ctx.Request)
+	})
+}
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	var user models.User
+	var user models.BaseUser
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	if err := models.CreateUser(db.DB, user); err != nil {
+	if err := models.CreateUser(db, user); err != nil {
 		http.Error(w, "Couldn't create user", http.StatusInternalServerError)
 		return
 	}
@@ -26,13 +40,14 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var creds models.User
+	var creds models.BaseUser
 	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+		b, _ := json.Marshal(creds)
+		http.Error(w, "Invalid input "+err.Error()+string(b), http.StatusBadRequest)
 		return
 	}
 
-	user, err := models.GetUserByUsername(db.DB, creds.Username)
+	user, err := models.GetUserByUsername(db, creds.Username)
 	if err != nil || !models.CheckPasswordHash(creds.Password, user.Password) {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
