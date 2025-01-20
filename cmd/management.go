@@ -30,7 +30,7 @@ func NewUserManager() *cobra.Command {
 		},
 	}
 	userManager.Flags().StringVarP(&dbString, "dbString", "d", ":3306", "数据库连接地址")
-	userManager.Flags().StringVarP(&connectString, "connectString", "c", ":8080", "服务端连接地址")
+	userManager.Flags().StringVarP(&connectString, "connectString", "c", "root:pwd@tcp(localhost:3306)/testdb", "服务端连接地址")
 	userManager.Flags().StringVarP(&jwtKey, "jwtKey", "j", "", "jwt加密字段")
 	userManager.MarkFlagRequired("jwtKey")
 	return userManager

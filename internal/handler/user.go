@@ -30,6 +30,12 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gotUser, err := models.GetUserByUsername(db, user.Username)
+	if err == nil || gotUser.Username == user.Username {
+		http.Error(w, "Username already exists", http.StatusConflict)
+		return
+	}
+
 	if err := models.CreateUser(db, user); err != nil {
 		http.Error(w, "Couldn't create user", http.StatusInternalServerError)
 		return
@@ -49,7 +55,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := models.GetUserByUsername(db, creds.Username)
 	if err != nil || !models.CheckPasswordHash(creds.Password, user.Password) {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		http.Error(w, "Invalid credentials "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
